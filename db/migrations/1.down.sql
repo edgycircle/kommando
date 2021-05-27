@@ -1,0 +1,2 @@
+DROP INDEX index_kommando_scheduled_commands_on_handle_at;
+DROP TABLE kommando_scheduled_commands;
