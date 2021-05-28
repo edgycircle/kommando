@@ -1,7 +1,7 @@
 require_relative 'lib/kommando/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = 'kommando'
+  spec.name          = 'edgycircle_kommando'
   spec.version       = Kommando::VERSION.dup
   spec.authors       = ['David Strauß']
   spec.email         = ['david.strauss@edgycircle.com']

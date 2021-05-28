@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    kommando (1.0.0)
+    edgycircle_kommando (1.0.1)
       pg
 
 GEM
@@ -194,7 +194,7 @@ PLATFORMS
 
 DEPENDENCIES
   dry-validation
-  kommando!
+  edgycircle_kommando!
   minitest (~> 5.0)
   rails
   rake (~> 12.0)
