@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    edgycircle_kommando (1.0.1)
+    edgycircle_kommando (1.0.2)
       pg
 
 GEM
@@ -193,12 +193,12 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  dry-validation
+  dry-validation (~> 1.0)
   edgycircle_kommando!
   minitest (~> 5.0)
-  rails
+  rails (~> 6.0)
   rake (~> 12.0)
-  rubocop
+  rubocop (~> 1.0)
 
 BUNDLED WITH
    2.1.4

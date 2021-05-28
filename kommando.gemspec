@@ -12,13 +12,15 @@ Gem::Specification.new do |spec|
 
   spec.require_paths = %w[lib]
 
-  spec.files         = Dir.glob('lib/**/*, db/**/*')
+  spec.files         = Dir.glob(%w[lib/**/* db/**/*])
 
   spec.required_ruby_version = Gem::Requirement.new('>= 2.7.0')
 
   spec.add_runtime_dependency('pg')
 
-  spec.add_development_dependency('dry-validation')
-  spec.add_development_dependency('rails')
-  spec.add_development_dependency('rubocop')
+  spec.add_development_dependency('dry-validation', '~> 1.0')
+  spec.add_development_dependency('rails', '~> 6.0')
+  spec.add_development_dependency('rubocop', '~> 1.0')
+  spec.add_development_dependency('rake', '~> 12.0')
+  spec.add_development_dependency('minitest', '~> 5.0')
 end
