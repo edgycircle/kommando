@@ -40,7 +40,7 @@ module Kommando
 
               record.update({
                 failures: ::Sequel.pg_array(failures, :json),
-                handle_at: (record.handle_at + 5.minutes).getutc,
+                handle_at: (record.handle_at + 5 * 60).getutc,
               })
             end
           end
