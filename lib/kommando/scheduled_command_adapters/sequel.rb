@@ -12,7 +12,7 @@ module Kommando
         create({
           id: parameters.fetch(:command_id),
           name: command,
-          parameters: ::Sequel.pg_json_wrap(parameters),
+          parameters: JSON.generate(parameters),
           handle_at: handle_at,
           failures: ::Sequel.pg_array([], :json),
           wait_for_command_ids: ::Sequel.pg_array(parameters.fetch(:wait_for_command_ids, []), :uuid),
