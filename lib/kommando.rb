@@ -7,6 +7,7 @@ require_relative './kommando/command_plugins/execute'
 require_relative './kommando/command_plugins/schedule'
 require_relative './kommando/command_plugins/validate'
 require_relative './kommando/command_plugins/auto_schedule'
+require_relative './kommando/scheduled_command_adapters/memory'
 
 module Kommando
 end
