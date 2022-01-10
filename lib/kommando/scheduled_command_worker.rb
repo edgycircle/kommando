@@ -1,30 +1,37 @@
-require 'concurrent'
-
 module Kommando
   class ScheduledCommandWorker
-    def initialize(adapter, dependencies, number_of_threads)
-      @adapter = adapter
-      @dependencies = dependencies
-      @number_of_threads = number_of_threads
+    WAIT_STEP_SIZE = 0.25
+    WAIT_LIMIT = 20.0
+
+    def initialize(adapter, dependencies, number_of_runners)
+      @number_of_runners = number_of_runners
+      @runners = []
+
+      @runners << ScheduledCommandRunner.new(@runners.size + 1, adapter, dependencies) while @runners.size < @number_of_runners
+
+      @self_read, @self_write = IO.pipe
     end
 
     def start
-      @pool = Concurrent::FixedThreadPool.new(@number_of_threads)
-      @number_of_threads.times { schedule_next_run(0) }
-
-      while !@pool.shutdown?
-        sleep 1
-      end
-
-      @pool.wait_for_termination
+      @runners.each(&:start)
+      IO.select([@self_read])
     end
 
     def stop
-      @pool.shutdown
+      @runners.each(&:stop_before_next_fetch)
+
+      deadline = now + WAIT_LIMIT
+
+      sleep WAIT_STEP_SIZE until @runners.all?(&:stopped?) || now > deadline
+
+      @runners.reject(&:stopped?).each(&:kill)
+
+      @self_write.puts(:stop)
     end
 
-    def schedule_next_run(delay)
-      Concurrent::ScheduledTask.execute(delay, { executor: @pool }, &ScheduledCommandRunner.new(self, @adapter, @dependencies).method(:call))
+    private
+    def now
+      Process.clock_gettime(Process::CLOCK_MONOTONIC)
     end
   end
 end

@@ -19,60 +19,65 @@ class KommandoScheduledCommandRunnerTest < IsolationTest
 
   class FullAdapter
     class << self
-      attr_accessor :parameters, :command_name
+      attr_accessor :parameters, :command_name, :fetch_count
     end
 
     def self.fetch!(&block)
+      self.fetch_count += 1
       block.call(command_name, parameters)
     end
   end
 
   class EmptyAdapter
-    def self.fetch!(&block)
+    class << self
+      attr_accessor :parameters, :command_name, :fetch_count
     end
-  end
 
-  class DummyCoordinator
-    attr_reader :last_delay
-
-    def schedule_next_run(delay)
-      @last_delay = delay
+    def self.fetch!(&block)
+      self.fetch_count += 1
     end
   end
 
   def test_executes_command
     FullAdapter.parameters = { b: 2 }
     FullAdapter.command_name = TestCommand.name
-    coordinator = DummyCoordinator.new
+    FullAdapter.fetch_count = 0
     dependencies = { a: 1 }
-    runner = ScheduledCommandRunner.new(coordinator, FullAdapter, dependencies)
+    runner = ScheduledCommandRunner.new(1, FullAdapter, dependencies)
 
-    runner.call
+    runner.start
+
+    sleep 0.05 until FullAdapter.fetch_count > 1
+    runner.stop_before_next_fetch
 
     assert_equal dependencies, TestCommand.last_dependencies
     assert_equal FullAdapter.parameters, TestCommand.last_parameters
-    assert_equal 0, coordinator.last_delay, 'immediately schedules next run'
+    assert FullAdapter.fetch_count > 1, 'immediately schedules next run'
   end
 
   def test_unknown_command
     FullAdapter.parameters = { b: 2 }
     FullAdapter.command_name = 'OldCommand'
-    coordinator = DummyCoordinator.new
+    FullAdapter.fetch_count = 0
     dependencies = { a: 1 }
-    runner = ScheduledCommandRunner.new(coordinator, FullAdapter, dependencies)
+    runner = ScheduledCommandRunner.new(1, FullAdapter, dependencies)
 
-    assert_raises(Command::UnknownCommandError) do
-      runner.call
-    end
+    runner.start
+
+    sleep 0.05 until FullAdapter.fetch_count > 0
+    assert runner.stopped?
   end
 
   def test_delays_next_run_if_nothing_was_run
-    coordinator = DummyCoordinator.new
     dependencies = { a: 1 }
-    runner = ScheduledCommandRunner.new(coordinator, EmptyAdapter, dependencies)
+    EmptyAdapter.fetch_count = 0
+    runner = ScheduledCommandRunner.new(1, EmptyAdapter, dependencies)
 
-    runner.call
+    runner.start
 
-    assert_equal 5, coordinator.last_delay
+    sleep 0.05 until EmptyAdapter.fetch_count > 0
+    sleep 0.25
+
+    assert_equal 1, EmptyAdapter.fetch_count
   end
 end
