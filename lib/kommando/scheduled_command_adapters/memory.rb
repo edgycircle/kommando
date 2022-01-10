@@ -1,11 +1,13 @@
 require 'ostruct'
-require 'concurrent'
 
+# stravid@2022-01-10: This implementation is currently not threadsafe.
+#                     Instead of two arrays we need to use a single one in
+#                     combination with a mutex.
 module Kommando
   module ScheduledCommandAdapters
     class Memory
       @@scheduled = []
-      @@locked_ids = Concurrent::Array.new
+      @@locked_ids = []
 
       def self.schedule!(command, parameters, handle_at)
         @@scheduled << {
@@ -42,8 +44,32 @@ module Kommando
             record[:handle_at] = record[:handle_at] + 5 * 60
           end
 
-          @@locked_ids.push(record[:id])
+          @@locked_ids.delete(record[:id])
         end
+      end
+
+      def self.metrics
+        scheduled_ids = @@scheduled.map { |command| command[:id] }
+
+        executable = @@scheduled.select do |command|
+          next if @@locked_ids.include?(command[:id])
+          next if Time.now < command[:handle_at]
+          next if command[:wait_for_command_ids].any? { |id| scheduled_ids.include?(id) }
+
+          true
+        end.size
+
+        scheduled = count
+
+        with_failures = @@scheduled.select do |command|
+          command[:failures].size > 0
+        end.size
+
+        {
+          kommando_executable_commands: executable,
+          kommando_scheduled_commands: scheduled,
+          kommando_scheduled_commands_with_failures: with_failures,
+        }
       end
 
       def self.first
@@ -56,7 +82,7 @@ module Kommando
 
       def self.clear
         @@scheduled = []
-        @@locked_ids = Concurrent::Array.new
+        @@locked_ids = []
       end
     end
   end

@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    edgycircle_kommando (1.0.2)
+    edgycircle_kommando (1.1.0)
       pg
 
 GEM

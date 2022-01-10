@@ -40,6 +40,22 @@ module Kommando
         end
       end
 
+      def self.metrics
+        executable = where('TIMEZONE(\'UTC\', NOW()) >= handle_at').
+          where.not("wait_for_command_ids && (SELECT array_agg(id) FROM #{table_name})").
+          count
+
+        scheduled = count
+
+        with_failures = where('array_length(failures, 1) > 0').count
+
+        {
+          kommando_executable_commands: executable,
+          kommando_scheduled_commands: scheduled,
+          kommando_scheduled_commands_with_failures: with_failures,
+        }
+      end
+
       def parameters
         @parameters ||= super.deep_symbolize_keys!
       end

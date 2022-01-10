@@ -176,4 +176,25 @@ class KommandoScheduledCommandAdaptersSequelTest < DatabaseTest
     assert callback_a
     refute callback_b
   end
+
+  def test_metrics
+    command = 'ACommand'
+    parameters_a = { command_id: SecureRandom.uuid }
+    handle_at_a = Time.new(2020, 12, 13, 15, 22).getutc
+    parameters_b = { command_id: SecureRandom.uuid, wait_for_command_ids: [parameters_a[:command_id]] }
+    handle_at_b = Time.new(2020, 12, 13, 15, 21).getutc
+
+    ScheduledCommandAdapters::Sequel.schedule!(command, parameters_a, handle_at_a)
+    ScheduledCommandAdapters::Sequel.schedule!(command, parameters_b, handle_at_b)
+
+    ScheduledCommandAdapters::Sequel.fetch! do |command, parameters|
+      CommandResult.failure({ error: :error, command: command, parameters: parameters, details: :details })
+    end
+
+    result = ScheduledCommandAdapters::Sequel.metrics
+
+    assert_equal 1, result[:kommando_executable_commands]
+    assert_equal 2, result[:kommando_scheduled_commands]
+    assert_equal 1, result[:kommando_scheduled_commands_with_failures]
+  end
 end

@@ -47,6 +47,22 @@ module Kommando
         end
       end
 
+      def self.metrics
+        executable = where(::Sequel.lit('TIMEZONE(\'UTC\', NOW()) >= handle_at')).
+          exclude(::Sequel.lit("wait_for_command_ids && (SELECT array_agg(id) FROM #{table_name})")).
+          count
+
+        scheduled = count
+
+        with_failures = where(::Sequel.lit('array_length(failures, 1) > 0')).count
+
+        {
+          kommando_executable_commands: executable,
+          kommando_scheduled_commands: scheduled,
+          kommando_scheduled_commands_with_failures: with_failures,
+        }
+      end
+
       def parameters
         @parameters ||= deep_symbolize(super)
       end
